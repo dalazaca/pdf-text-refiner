@@ -12,11 +12,11 @@ class OllamaChecker:
     """Verificador de redacción y estilo usando Ollama LLM.
 
     Ejemplo:
-        >>> checker = OllamaChecker(model="mistral", host="http://localhost:11434")
+        >>> checker = OllamaChecker(model="llama3:8b", host="http://localhost:11434")
         >>> errors = checker.check("Este es un texto.", page_number=0)
     """
 
-    def __init__(self, model: str = "mistral", host: str = "http://localhost:11434", timeout: int = 120):
+    def __init__(self, model: str = "llama3:8b", host: str = "http://localhost:11434", timeout: int = 120):
         """Inicializa el checker de Ollama.
 
         Args:

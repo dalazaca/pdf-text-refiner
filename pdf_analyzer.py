@@ -18,7 +18,7 @@ Instalación:
 Uso:
     python pdf_analyzer.py --pdf documento.pdf
     python pdf_analyzer.py --pdf documento.pdf --start-page 10 --end-page 20
-    python pdf_analyzer.py --pdf documento.pdf --model mistral:latest
+    python pdf_analyzer.py --pdf documento.pdf --model llama3:8b
 
 Nota:
     Este script ha sido refactorizado. El código legacy está disponible en:
@@ -57,7 +57,7 @@ def main():
         description='Analiza errores en PDFs usando LanguageTool + Ollama (modo híbrido).',
         epilog='Ejemplos:\n'
                '  python pdf_analyzer.py --pdf documento.pdf\n'
-               '  python pdf_analyzer.py --pdf documento.pdf --model mistral:latest\n'
+               '  python pdf_analyzer.py --pdf documento.pdf --model llama3:8b\n'
                '  python pdf_analyzer.py --pdf documento.pdf --start-page 10 --end-page 20',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )

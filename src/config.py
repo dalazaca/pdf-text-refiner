@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     # Configuración de Ollama
     ollama_host: str = "http://localhost:11434"
-    ollama_model: str = "mistral"
+    ollama_model: str = "llama3:8b"
     ollama_timeout: int = 120
 
     # Configuración de LanguageTool

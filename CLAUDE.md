@@ -57,7 +57,7 @@ Uses `pydantic-settings` with `PDF_ANALYZER_` prefix for environment variables:
 ```python
 # src/config.py
 ollama_host: str = "http://localhost:11434"     # Auto-detected from WSL gateway
-ollama_model: str = "mistral"                   # Default model
+ollama_model: str = "llama3:8b"                   # Default model
 ollama_timeout: int = 120
 languagetool_language: str = "es"
 languagetool_cache_dir: Path                    # Persistent LanguageTool downloads

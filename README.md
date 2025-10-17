@@ -153,7 +153,7 @@ uv run python pdf_analyzer.py --pdf tesis.pdf --out resultados_tesis.txt
 uv run python pdf_analyzer.py --pdf libro.pdf --start-page 10 --end-page 20
 
 # Usar un modelo más potente
-uv run python pdf_analyzer.py --pdf articulo.pdf --model mistral:latest
+uv run python pdf_analyzer.py --pdf articulo.pdf --model llama3:8b
 
 # Modo debug para inspeccionar el texto extraído
 uv run python pdf_analyzer.py --pdf documento.pdf --debug
