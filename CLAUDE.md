@@ -71,6 +71,7 @@ languagetool_cache_dir: Path                    # Persistent LanguageTool downlo
 - Manages lifecycle: `initialize()` → `check()` → `cleanup()`
 - Uses persistent cache in `~/.cache/language_tool_python/`
 - Downloads ~254MB on first run (requires internet)
+- **Cache Management**: Auto-detects existing downloads and sets `LTP_JAR_DIR_PATH` env var to prevent re-downloads
 - Returns errors with exact character offsets
 
 **OllamaChecker**:
@@ -119,6 +120,42 @@ languagetool_cache_dir: Path                    # Persistent LanguageTool downlo
    ```
 
 3. Update `format_output_hybrid()` in `formatters.py` to handle the new checker type
+
+### Debugging LanguageTool Cache Issues
+
+**Problem**: LanguageTool keeps showing "Downloading LanguageTool latest: X%" even though it's already downloaded.
+
+**Root Cause**: The `language_tool_python` library only respects the `LTP_JAR_DIR_PATH` environment variable, not custom paths.
+
+**Solution**: The `LanguageToolChecker.initialize()` method automatically:
+1. Scans `~/.cache/language_tool_python/` for existing downloads
+2. Finds the most recent version (e.g., `LanguageTool-6.8-SNAPSHOT`)
+3. Sets `os.environ['LTP_JAR_DIR_PATH']` to that directory
+4. This prevents `download_lt()` from attempting re-download
+
+**Expected Output** (when cache is working):
+```
+🔧 Inicializando LanguageTool...
+📦 Usando LanguageTool en caché: LanguageTool-6.8-SNAPSHOT
+✅ LanguageTool iniciado
+```
+
+**Troubleshooting**:
+```bash
+# Check if LanguageTool is cached
+ls -la ~/.cache/language_tool_python/
+
+# Expected: LanguageTool-6.8-SNAPSHOT/ directory (~254MB)
+
+# If cache is corrupted, delete and re-download
+rm -rf ~/.cache/language_tool_python/
+uv run python pdf_analyzer.py --pdf test.pdf --start-page 1 --end-page 1
+```
+
+**Technical Details**:
+- Cache location: `~/.cache/language_tool_python/LanguageTool-{VERSION}/`
+- Environment variable: `LTP_JAR_DIR_PATH` (NOT `LANGUAGE_TOOL_PATH`)
+- Source code reference: `language_tool_python/download_lt.py:217-218`
 
 ### Debugging Ollama Issues
 

@@ -57,8 +57,9 @@ class LanguageToolChecker:
                 lt_dir = max(lt_versions, key=lambda p: p.stat().st_mtime)
                 print(f"📦 Usando LanguageTool en caché: {lt_dir.name}")
 
-                # Configurar para usar la versión local sin descargar
-                os.environ['LANGUAGE_TOOL_PATH'] = str(lt_dir)
+                # Configurar variable de entorno LTP_JAR_DIR_PATH para evitar descarga
+                # Esta variable hace que download_lt() retorne inmediatamente sin descargar
+                os.environ['LTP_JAR_DIR_PATH'] = str(lt_dir)
 
         self.tool = language_tool_python.LanguageTool(self.language)
         print("✅ LanguageTool iniciado")

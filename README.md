@@ -248,7 +248,7 @@ El script incluye validaciones para:
 ## Limitaciones
 
 - **Tamaño recomendado**: PDFs de hasta ~300 páginas. Documentos más grandes pueden procesarse pero tardarán más
-- **Conexión a Internet**: La primera ejecución de LanguageTool requiere conexión para descargar recursos
+- **Conexión a Internet**: La primera ejecución de LanguageTool requiere conexión para descargar recursos (~254MB). Una vez descargado, el caché persiste en `~/.cache/language_tool_python/` y no requiere conexión
 - **PDFs escaneados**: El script solo funciona con PDFs que contengan texto seleccionable. Para PDFs escaneados (imágenes), se requiere OCR previo
 - **Rendimiento**: El análisis híbrido puede tomar 3-10 segundos por página dependiendo del modelo LLM usado
 - **Ollama requerido**: El script requiere que Ollama esté instalado y ejecutándose con al menos un modelo descargado
@@ -260,6 +260,35 @@ El script incluye validaciones para:
 **Causa**: Falta de conexión a Internet o recursos no descargados.
 
 **Solución**: Verifica tu conexión y ejecuta nuevamente. Los recursos se descargan automáticamente la primera vez.
+
+### LanguageTool sigue intentando descargar aunque ya está descargado
+
+**Síntoma**: Aparece "Downloading LanguageTool latest: 2%" cada vez que ejecutas el script.
+
+**Causa**: Versiones anteriores del código no configuraban correctamente la variable de entorno `LTP_JAR_DIR_PATH`.
+
+**Solución Automática** (v0.2.0+): El script ahora detecta automáticamente la versión descargada y la usa. Deberías ver:
+```
+🔧 Inicializando LanguageTool...
+📦 Usando LanguageTool en caché: LanguageTool-6.8-SNAPSHOT
+✅ LanguageTool iniciado
+```
+
+**Si el problema persiste**:
+```bash
+# 1. Verifica que LanguageTool esté descargado
+ls -la ~/.cache/language_tool_python/
+# Deberías ver: LanguageTool-6.8-SNAPSHOT/ (~254MB)
+
+# 2. Si la carpeta está vacía o corrupta, elimínala y vuelve a descargar
+rm -rf ~/.cache/language_tool_python/
+uv run python pdf_analyzer.py --pdf test.pdf --start-page 1 --end-page 1
+
+# 3. Si actualizaste desde una versión anterior, asegúrate de tener el código más reciente
+git pull  # o descarga la última versión
+```
+
+**Detalles técnicos**: El script usa la variable de entorno `LTP_JAR_DIR_PATH` que es la única que la librería `language_tool_python` respeta para evitar re-descargas (ver [src/checkers/languagetool.py:62](src/checkers/languagetool.py#L62)).
 
 ### Error: "No se pudo conectar a Ollama"
 
