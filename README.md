@@ -1,6 +1,8 @@
-# PDF Analyzer
+# PDF Text Refiner
 
 Script en Python para análisis híbrido de errores en documentos PDF usando LanguageTool y Ollama LLMs.
+
+> **Versión 0.2.0** - Refactorizado con arquitectura modular para mejor mantenibilidad y escalabilidad.
 
 ## Características
 
@@ -23,23 +25,38 @@ Combina dos métodos complementarios para análisis exhaustivo:
 
 ### Requisitos previos
 
-- Python 3.7 o superior
+- Python 3.12 o superior
 - UV (gestor de paquetes Python)
 - Ollama instalado y ejecutándose
 
 ### Instalar dependencias
 
 ```bash
-uv add pdfminer.six language-tool-python tqdm ollama
+# Clonar o descargar el proyecto
+cd pdf-text-refiner
+
+# Instalar dependencias (uv crea automáticamente el entorno virtual)
+uv sync
+
+# Copiar archivo de configuración de ejemplo (opcional)
+cp .env.example .env
 ```
 
-Opcionalmente, puedes crear un entorno virtual aislado:
+### Variables de entorno (opcional)
+
+Puedes personalizar la configuración creando un archivo `.env`:
 
 ```bash
-uv venv .venv
-source .venv/bin/activate  # En Linux/macOS
-# .venv\Scripts\activate   # En Windows
-uv add pdfminer.six language-tool-python tqdm ollama
+# Configuración de Ollama
+PDF_ANALYZER_OLLAMA_HOST=http://localhost:11434
+PDF_ANALYZER_OLLAMA_MODEL=mistral
+PDF_ANALYZER_OLLAMA_TIMEOUT=120
+
+# Configuración de LanguageTool
+PDF_ANALYZER_LANGUAGETOOL_LANGUAGE=es
+
+# Debug
+PDF_ANALYZER_DEBUG_ENABLED=false
 ```
 
 ## Tabla de dependencias
@@ -77,17 +94,40 @@ python test_ollama_connection.py
 ### Paso 3: Instalar un modelo
 
 ```powershell
-ollama pull llama3.2:3b
+ollama pull mistral
 ```
 
 📖 **Guía completa**: Consulta `CONFIGURACION_OLLAMA.md` para más detalles.
+
+## Estructura del Proyecto
+
+```
+pdf-text-refiner/
+├── src/                          # Código fuente modular
+│   ├── pdf/                      # Extracción de PDFs
+│   │   └── extractor.py          # PDFExtractor class
+│   ├── checkers/                 # Verificadores de texto
+│   │   ├── languagetool.py       # LanguageToolChecker
+│   │   └── ollama.py             # OllamaChecker
+│   ├── formatters.py             # Formateadores de salida
+│   ├── config.py                 # Configuración centralizada (pydantic)
+│   └── utils.py                  # Utilidades (network, debug)
+├── scripts/
+│   └── legacy/
+│       └── pdf_analyzer.py       # Versión monolítica original (legacy)
+├── pdf_analyzer.py               # Script principal refactorizado
+├── .env.example                  # Template de configuración
+└── pyproject.toml                # Dependencias del proyecto
+```
 
 ## Uso
 
 ### Sintaxis básica
 
+**IMPORTANTE**: Ejecuta el script usando `uv run` para usar el entorno virtual correcto:
+
 ```bash
-python pdf_analyzer.py --pdf documento.pdf
+uv run python pdf_analyzer.py --pdf documento.pdf
 ```
 
 ### Parámetros
@@ -97,32 +137,32 @@ python pdf_analyzer.py --pdf documento.pdf
 - `--start-page`: **(Opcional)** Página de inicio para el análisis (default: primera página)
 - `--end-page`: **(Opcional)** Página final para el análisis (default: última página)
 - `--debug`: **(Opcional)** Activa modo debug: guarda el texto extraído de cada página
-- `--model`: **(Opcional)** Modelo de Ollama a usar (default: `llama3.2:3b`)
+- `--model`: **(Opcional)** Modelo de Ollama a usar (default: `mistral`)
 - `--ollama-host`: **(Opcional)** URL del servidor Ollama (auto-detecta desde WSL)
 
 ### Ejemplos
 
 ```bash
 # Análisis básico con configuración por defecto
-python pdf_analyzer.py --pdf documento.pdf
+uv run python pdf_analyzer.py --pdf documento.pdf
 
 # Especificar archivo de salida personalizado
-python pdf_analyzer.py --pdf tesis.pdf --out resultados_tesis.txt
+uv run python pdf_analyzer.py --pdf tesis.pdf --out resultados_tesis.txt
 
 # Analizar solo un rango de páginas (ejemplo: páginas 10 a 20)
-python pdf_analyzer.py --pdf libro.pdf --start-page 10 --end-page 20
+uv run python pdf_analyzer.py --pdf libro.pdf --start-page 10 --end-page 20
 
 # Usar un modelo más potente
-python pdf_analyzer.py --pdf articulo.pdf --model mistral:latest
+uv run python pdf_analyzer.py --pdf articulo.pdf --model mistral:latest
 
 # Modo debug para inspeccionar el texto extraído
-python pdf_analyzer.py --pdf documento.pdf --debug
+uv run python pdf_analyzer.py --pdf documento.pdf --debug
 
 # Especificar host de Ollama personalizado
-python pdf_analyzer.py --pdf doc.pdf --ollama-host http://192.168.1.100:11434
+uv run python pdf_analyzer.py --pdf doc.pdf --ollama-host http://192.168.1.100:11434
 
 # Análisis completo con todas las opciones
-python pdf_analyzer.py --pdf libro.pdf --out errores.txt --start-page 1 --end-page 50 --model mistral:7b --debug
+uv run python pdf_analyzer.py --pdf libro.pdf --out errores.txt --start-page 1 --end-page 50 --model mistral:7b --debug
 ```
 
 ## Formato de salida
@@ -244,9 +284,57 @@ El script incluye validaciones para:
 **Causa**: El análisis con LLM es naturalmente más lento que solo LanguageTool.
 
 **Solución**:
-- Usa modelos más pequeños como `llama3.2:3b` para mayor velocidad
+- Usa modelos más pequeños como `mistral` para mayor velocidad
 - Analiza solo rangos específicos de páginas con `--start-page` y `--end-page`
 - Divide el PDF en secciones más pequeñas
+
+## Migración desde versión anterior
+
+Si estabas usando la versión anterior (monolítica), el script legacy está disponible en:
+
+```bash
+scripts/legacy/pdf_analyzer.py
+```
+
+La nueva versión refactorizada mantiene **exactamente el mismo comportamiento y formato de salida**, pero con código más mantenible y escalable.
+
+### Cambios principales:
+
+- **Arquitectura modular**: Código separado por responsabilidades
+- **Configuración centralizada**: Usa pydantic-settings para variables de entorno
+- **Mejor mantenibilidad**: Cada módulo tiene una responsabilidad clara
+- **Preparado para testing**: Estructura lista para agregar tests unitarios e integración
+- **Mismo CLI**: Los mismos argumentos y comportamiento
+
+## Desarrollo
+
+### Agregar nuevos checkers
+
+Para agregar un nuevo verificador de texto:
+
+1. Crea una nueva clase en `src/checkers/nuevo_checker.py`
+2. Implementa el método `check(text: str, page_number: int) -> List[Dict]`
+3. Importa y usa en `pdf_analyzer.py`
+
+Ejemplo:
+
+```python
+# src/checkers/nuevo_checker.py
+from typing import List, Dict
+
+class NuevoChecker:
+    def check(self, text: str, page_number: int) -> List[Dict]:
+        # Tu lógica aquí
+        return []
+```
+
+### Estructura de módulos
+
+- **`src/pdf/extractor.py`**: Maneja toda la extracción de texto desde PDFs
+- **`src/checkers/`**: Verificadores de texto (LanguageTool, Ollama, etc.)
+- **`src/formatters.py`**: Formateo de resultados
+- **`src/config.py`**: Configuración con pydantic-settings
+- **`src/utils.py`**: Funciones auxiliares (network, debug)
 
 ## Contribuciones
 
